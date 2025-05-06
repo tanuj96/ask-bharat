@@ -1,14 +1,27 @@
-const express = require("express");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import messageRoutes from "./routes/messages.js";
+import chatRoutes from "./routes/chat.js";
+
+dotenv.config();
+
 const app = express();
-const PORT = process.env.PORT || 5000;
-const mongoose = require("mongoose");
-require("dotenv").config();
+const PORT = process.env.PORT || 5001;
+
+app.use(cors());
+app.use(express.json());
+
+app.use("/api/chat", chatRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 mongoose
   .connect(process.env.MONGO_CONNECTION_STRING)
-  .then(() => console.log("MongoDB connected"))
+  .then(() =>
+    app.listen(PORT, () =>
+      console.log(`AskBharat Backend Running on port : ${PORT}`)
+    )
+  )
   .catch((err) => console.error(err));
-
-app.get("/", (req, res) => res.send("AskBharat Backend Running"));
-
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
