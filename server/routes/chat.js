@@ -30,7 +30,6 @@ router.post("/", async (req, res) => {
 
     // Assuming chatModel.call() works with a list of messages
     const response = await chatModel.call(messages);
-    console.log("Output:", response);
 
     const content = response.content;
     const aiMessage = new Message({
