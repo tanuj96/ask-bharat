@@ -1,13 +1,11 @@
-import './App.css'
-import { Button } from './components/ui/button'
+import ChatWindow from "./components/ChatWindow";
 
 function App() {
-
   return (
-    <>
-      <Button>Click</Button>
-    </>
-  )
+    <div className="bg-gray-100 h-screen">
+      <ChatWindow />
+    </div>
+  );
 }
 
-export default App
+export default App;
