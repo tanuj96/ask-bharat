@@ -1,70 +1,110 @@
-import express from "express";
-import { chatModel } from "../langchain/ollamachat.js";
-import Message from "../models/Message.js";
-import Customization from "../models/Customization.js";
-import { createChromaStore } from "../langchain/vectorStore.js";
+import express from 'express';
+import { chatModel } from '../langchain/ollamachat.js';
+import Message from '../models/Message.js';
+import Customization from '../models/Customization.js';
+import { createChromaStore } from '../langchain/vectorStore.js';
+import auth from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-  console.log("api chat called");
+router.post('/', auth, async (req, res) => {
+  const { message, chatbotId } = req.body;
 
-  const { message } = req.body;
-
-  if (!message) return res.status(400).json({ error: "Message required" });
+  if (!message || !chatbotId) {
+    return res.status(400).json({ error: "Message and chatbotId are required" });
+  }
 
   try {
-    // Step 1: Fetch the customization for context
-    const customization = await Customization.findOne().sort({ _id: -1 });
+    // Verify user owns this chatbot
+    const customization = await Customization.findOne({ 
+      chatbotId,
+      owner: req.user._id
+    });
 
-    // Step 2: Create Chroma store and perform similarity search
-    const store = await createChromaStore();
-    const relevantDocs = await store.similaritySearch(message, 3);  // top 3 matches
-    const contextText = relevantDocs.map(doc => doc.pageContent).join("\n\n");
+    if (!customization) {
+      return res.status(403).json({ error: "Unauthorized access to chatbot" });
+    }
 
-    // Step 3: Build the system prompt using context and message
+    let contextText = "";
+    try {
+      // Get context from vector store
+      const store = await createChromaStore();
+      const relevantDocs = await store.similaritySearch(message, 3, {
+        chatbotId,
+        ownerId: req.user._id.toString()
+      });
+      contextText = relevantDocs.map(doc => doc.pageContent).join("\n\n");
+    } catch (vectorError) {
+      console.error("Vector store error (using empty context):", vectorError);
+      contextText = "No additional context available";
+    }
+
+    // Create messages array with context
     const messages = [
       {
         role: "system",
-        content: `You are a helpful assistant for business support. Use the following business document info to answer the user's question:\n\n${contextText}`,
+        content: `You are a helpful assistant for ${customization.businessName}. 
+                  Use the following business information to answer questions:
+                  ${contextText}`
       },
       {
         role: "user",
-        content: message,
-      },
+        content: message
+      }
     ];
 
-    // Step 4: Save user message to MongoDB
+    // Save user message
     const userMessage = new Message({
-      sender: "Me",
+      sender: "user",
       role: "user",
       content: message,
-      timeStamp: Date.now(),
+      chatbotId,
+      owner: req.user._id,
+      timeStamp: Date.now()
     });
     await userMessage.save();
 
-    // Step 5: Call the chatbot model with the context and user message
-    const response = await chatModel.call(messages);
+    // Get AI response with timeout
+    let response;
+    try {
+      response = await Promise.race([
+        chatModel.call(messages),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI response timeout')), 30000)
+        )
+      ]);
+    } catch (aiError) {
+      console.error("AI Response Error:", aiError);
+      return res.status(500).json({ 
+        error: "AI service unavailable",
+        details: aiError.message 
+      });
+    }
 
-    const content = response.content;
+    // Save AI message
     const aiMessage = new Message({
-      content: content,
-      sender: "BharatBot",
+      content: response.content,
+      sender: customization.businessName || "Assistant",
       role: "assistant",
-      timeStamp: Date.now(),
+      chatbotId,
+      owner: req.user._id,
+      timeStamp: Date.now()
     });
     await aiMessage.save();
 
-    // Step 6: Send response to the client
     res.json({
-      content: content,
-      sender: "BharatBot",
+      content: response.content,
+      sender: customization.businessName || "Assistant",
       role: "assistant",
-      timeStamp: Date.now(),
+      timeStamp: Date.now()
     });
+
   } catch (err) {
     console.error("Chat Error:", err);
-    res.status(500).json({ error: "Failed to get AI response" });
+    res.status(500).json({ 
+      error: "Failed to process chat request",
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
