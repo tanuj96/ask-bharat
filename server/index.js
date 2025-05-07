@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import messageRoutes from "./routes/messages.js";
 import chatRoutes from "./routes/chat.js";
+import customizationRoutes from "./routes/customization.js";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 app.use("/api/chat", chatRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/customize-chatbot", customizationRoutes);
 
 
 mongoose

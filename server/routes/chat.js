@@ -1,6 +1,7 @@
 import express from "express";
 import { chatModel } from "../langchain/ollamachat.js";
 import Message from "../models/Message.js";
+import Customization from "../models/Customization.js";
 
 const router = express.Router();
 
@@ -13,7 +14,13 @@ router.post("/", async (req, res) => {
 
   try {
     // Prepare the message in the required format
+    const customization = await Customization.findOne().sort({ _id: -1 });
+
     const messages = [
+      {
+        role: "system",
+        content: customization?.modelResponse || "You are a helpful assistant for business support.",
+      },
       {
         role: "user",
         content: message,
