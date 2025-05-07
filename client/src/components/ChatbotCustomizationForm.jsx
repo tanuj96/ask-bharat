@@ -6,6 +6,7 @@ const ChatbotCustomizationForm = () => {
   const [icon, setIcon] = useState(null);
   const [primaryColor, setPrimaryColor] = useState("#000000");
   const [secondaryColor, setSecondaryColor] = useState("#FFFFFF");
+  const [businessName, setBusinessName] = useState(""); // added businessName
 
   const handleDocumentUpload = (e) => {
     setBusinessDocument(e.target.files[0]);
@@ -20,15 +21,14 @@ const ChatbotCustomizationForm = () => {
   };
 
   const handleSubmit = async () => {
-    // Create FormData to send to the server
     const formData = new FormData();
     formData.append("businessDocument", businessDocument);
     formData.append("logo", logo);
     formData.append("icon", icon);
     formData.append("primaryColor", primaryColor);
     formData.append("secondaryColor", secondaryColor);
+    formData.append("businessName", businessName); // send businessName
 
-    // Send the data to the backend
     try {
       const response = await fetch(
         "http://localhost:5001/api/customize-chatbot",
@@ -51,6 +51,19 @@ const ChatbotCustomizationForm = () => {
   return (
     <div className="p-8 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-6">
       <h2 className="text-xl font-semibold">Customize Your Chatbot</h2>
+
+      <div>
+        <label htmlFor="businessName" className="block text-gray-700">
+          Business Name
+        </label>
+        <input
+          type="text"
+          id="businessName"
+          value={businessName}
+          onChange={(e) => setBusinessName(e.target.value)}
+          className="border p-2 mt-2 w-full rounded"
+        />
+      </div>
 
       <div>
         <label htmlFor="businessDocument" className="block text-gray-700">

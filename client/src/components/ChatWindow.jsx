@@ -7,10 +7,12 @@ export default function ChatWindow() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
+  // Fetch all messages from the backend
   useEffect(() => {
-    axios.get("http://localhost:5001/api/messages")
-      .then(res => setMessages(res.data))
-      .catch(err => console.error("Error fetching messages:", err));
+    axios
+      .get("http://localhost:5001/api/messages")
+      .then((res) => setMessages(res.data))
+      .catch((err) => console.error("Error fetching messages:", err));
   }, []);
 
   const sendMessage = async () => {
@@ -18,23 +20,28 @@ export default function ChatWindow() {
 
     try {
       const userMsg = { sender: "Me", content: input, timeStamp: Date.now() };
-      setMessages(prev => [...prev, userMsg]);
+      setMessages((prev) => [...prev, userMsg]);
 
-      setInput('');
-      const res = await axios.post("http://localhost:5001/api/chat", { message: input });
+      setInput("");
+
+      const res = await axios.post("http://localhost:5001/api/chat", {
+        message: input,
+      });
 
       const botMsg = {
         sender: res.data.sender,
         content: res.data.content,
-        timeStamp: res.data.timeStamp
+        timeStamp: res.data.timeStamp,
       };
 
-      setMessages(prev => [...prev, botMsg]);
-
+      setMessages((prev) => [...prev, botMsg]);
     } catch (error) {
       console.error("Error fetching AI response:", error);
-      const errorMsg = { sender: "BharatBot", content: "Sorry, something went wrong. Please try again." };
-      setMessages(prev => [...prev, errorMsg]);
+      const errorMsg = {
+        sender: "BharatBot",
+        content: "Sorry, something went wrong. Please try again.",
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     }
 
     setInput("");
@@ -54,7 +61,7 @@ export default function ChatWindow() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
           <button onClick={sendMessage} className="bg-blue-600 text-white p-2 rounded">
             Send
