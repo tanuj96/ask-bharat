@@ -2,6 +2,7 @@ import express from "express";
 import { chatModel } from "../langchain/ollamachat.js";
 import Message from "../models/Message.js";
 import Customization from "../models/Customization.js";
+import { createChromaStore } from "../langchain/vectorStore.js";
 
 const router = express.Router();
 
@@ -13,13 +14,19 @@ router.post("/", async (req, res) => {
   if (!message) return res.status(400).json({ error: "Message required" });
 
   try {
-    // Prepare the message in the required format
+    // Step 1: Fetch the customization for context
     const customization = await Customization.findOne().sort({ _id: -1 });
 
+    // Step 2: Create Chroma store and perform similarity search
+    const store = await createChromaStore();
+    const relevantDocs = await store.similaritySearch(message, 3);  // top 3 matches
+    const contextText = relevantDocs.map(doc => doc.pageContent).join("\n\n");
+
+    // Step 3: Build the system prompt using context and message
     const messages = [
       {
         role: "system",
-        content: customization?.modelResponse || "You are a helpful assistant for business support.",
+        content: `You are a helpful assistant for business support. Use the following business document info to answer the user's question:\n\n${contextText}`,
       },
       {
         role: "user",
@@ -27,6 +34,7 @@ router.post("/", async (req, res) => {
       },
     ];
 
+    // Step 4: Save user message to MongoDB
     const userMessage = new Message({
       sender: "Me",
       role: "user",
@@ -35,7 +43,7 @@ router.post("/", async (req, res) => {
     });
     await userMessage.save();
 
-    // Assuming chatModel.call() works with a list of messages
+    // Step 5: Call the chatbot model with the context and user message
     const response = await chatModel.call(messages);
 
     const content = response.content;
@@ -47,6 +55,7 @@ router.post("/", async (req, res) => {
     });
     await aiMessage.save();
 
+    // Step 6: Send response to the client
     res.json({
       content: content,
       sender: "BharatBot",

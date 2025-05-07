@@ -1,17 +1,16 @@
 import express from "express";
 import multer from "multer";
 import { chatModel } from "../langchain/ollamachat.js";
+import { addDocumentToStore } from "../langchain/vectorStore.js";  // ⬅️ ADD THIS IMPORT
 import fs from "fs";
 import pdfParse from "pdf-parse";
 import Customization from "../models/Customization.js";
 
-// Ensure 'uploads' folder exists
 const uploadDir = './uploads/';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Set up multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -40,8 +39,11 @@ router.post("/", upload.fields([
     const pdfData = await pdfParse(pdfBuffer);
     const documentText = pdfData.text;
 
-    // Fine-tune chatbot with document content (Langchain call)
-    const messages = [{ role: "user", content: documentText }];
+    // ⬇️ ADD this: save document text to Chroma vector store
+    await addDocumentToStore(documentText, { business: req.body.businessName || "generic" });
+
+    // Generate a generic response if you need
+    const messages = [{ role: "user", content: "Document uploaded and embeddings created." }];
     const response = await chatModel.call(messages);
 
     // Save customization info into MongoDB
@@ -58,7 +60,7 @@ router.post("/", upload.fields([
 
     res.json({
       success: true,
-      message: "Chatbot customized successfully",
+      message: "Chatbot customized successfully, document embedded.",
       modelResponse: response.content
     });
 
