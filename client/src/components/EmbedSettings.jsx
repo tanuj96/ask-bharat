@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import api from '../../utils/api';
 
 const EmbedSettings = () => {
   const { chatbotId } = useParams();
@@ -15,10 +16,7 @@ const EmbedSettings = () => {
   useEffect(() => {
     const fetchEmbedCode = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5001/api/embed/${chatbotId}`,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-        );
+        const response = await api.get(`/embed/${chatbotId}`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch embed code');

@@ -5,6 +5,7 @@ import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import api from '../../utils/api';
 
 const ChatbotCustomizationForm = () => {
   const [formData, setFormData] = useState({
@@ -46,13 +47,7 @@ const ChatbotCustomizationForm = () => {
     if (icon) formDataToSend.append('icon', icon);
 
     try {
-      const response = await fetch('http://localhost:5001/api/customize-chatbot', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formDataToSend
-      });
+     const response = await api.post('/customize-chatbot', formDataToSend);
 
       const data = await response.json();
       if (response.ok) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import ChatbotCard from './ChatbotCard';
+import api from '../../utils/api';
 
 const Dashboard = () => {
   const [chatbots, setChatbots] = useState([]);
@@ -11,14 +12,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchChatbots = async () => {
+
       try {
-        const response = await fetch('http://localhost:5001/api/customization', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        const data = await response.json();
-        if (response.ok) {
+        const response = await api.get('/customization')
+        const data = await response.data;
+
+        if (data) {
           setChatbots(data);
         } else {
           console.error(data.error);

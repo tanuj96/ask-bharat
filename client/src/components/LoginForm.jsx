@@ -4,6 +4,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
+import api from '../../utils/api';
+
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -18,17 +20,11 @@ const LoginForm = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await api.post('/auth/login', { email, password })
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      const data = await response.data;
+      
+      if (!data.user) {
         throw new Error(data.error || 'Login failed');
       }
 
