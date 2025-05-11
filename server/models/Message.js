@@ -14,6 +14,16 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  chatbotId: {  // Add this field
+    type: String,
+    required: true,
+    index: true
+  },
+  owner: {  // Add this field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   timeStamp: {
     type: Date,
     default: Date.now,

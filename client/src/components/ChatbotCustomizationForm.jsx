@@ -1,139 +1,185 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const ChatbotCustomizationForm = () => {
+  const [formData, setFormData] = useState({
+    businessName: '',
+    primaryColor: '#2563EB',
+    secondaryColor: '#FFFFFF',
+    fontFamily: 'Arial',
+    chatHeight: '500px',
+    chatWidth: '350px',
+    position: 'bottom-right',
+    welcomeMessage: 'Hi! How can I help you today?'
+  });
   const [businessDocument, setBusinessDocument] = useState(null);
   const [logo, setLogo] = useState(null);
   const [icon, setIcon] = useState(null);
-  const [primaryColor, setPrimaryColor] = useState("#000000");
-  const [secondaryColor, setSecondaryColor] = useState("#FFFFFF");
-  const [businessName, setBusinessName] = useState(""); // added businessName
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleDocumentUpload = (e) => {
-    setBusinessDocument(e.target.files[0]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleLogoUpload = (e) => {
-    setLogo(e.target.files[0]);
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleIconUpload = (e) => {
-    setIcon(e.target.files[0]);
-  };
-
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append("businessDocument", businessDocument);
-    formData.append("logo", logo);
-    formData.append("icon", icon);
-    formData.append("primaryColor", primaryColor);
-    formData.append("secondaryColor", secondaryColor);
-    formData.append("businessName", businessName); // send businessName
+    const formDataToSend = new FormData();
+    formDataToSend.append('businessName', formData.businessName);
+    formDataToSend.append('primaryColor', formData.primaryColor);
+    formDataToSend.append('secondaryColor', formData.secondaryColor);
+    formDataToSend.append('fontFamily', formData.fontFamily);
+    formDataToSend.append('chatHeight', formData.chatHeight);
+    formDataToSend.append('chatWidth', formData.chatWidth);
+    formDataToSend.append('position', formData.position);
+    formDataToSend.append('welcomeMessage', formData.welcomeMessage);
+    if (businessDocument) formDataToSend.append('businessDocument', businessDocument);
+    if (logo) formDataToSend.append('logo', logo);
+    if (icon) formDataToSend.append('icon', icon);
 
     try {
-      const response = await fetch(
-        "http://localhost:5001/api/customize-chatbot",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch('http://localhost:5001/api/customize-chatbot', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+
       const data = await response.json();
       if (response.ok) {
-        alert("Customization successful!");
+        navigate(`/dashboard`);
       } else {
-        alert("Error in customization.");
+        alert(data.error || 'Error creating chatbot');
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
+      alert('Failed to create chatbot');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-8 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-6">
-      <h2 className="text-xl font-semibold">Customize Your Chatbot</h2>
+    <Card className="p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6">Customize Your Chatbot</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="businessName">Business Name</Label>
+            <Input
+              id="businessName"
+              name="businessName"
+              value={formData.businessName}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-      <div>
-        <label htmlFor="businessName" className="block text-gray-700">
-          Business Name
-        </label>
-        <input
-          type="text"
-          id="businessName"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="welcomeMessage">Welcome Message</Label>
+            <Input
+              id="welcomeMessage"
+              name="welcomeMessage"
+              value={formData.welcomeMessage}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-      <div>
-        <label htmlFor="businessDocument" className="block text-gray-700">
-          Upload Business Document
-        </label>
-        <input
-          type="file"
-          id="businessDocument"
-          onChange={handleDocumentUpload}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="businessDocument">Business Document (PDF)</Label>
+            <Input
+              type="file"
+              id="businessDocument"
+              accept=".pdf"
+              onChange={(e) => setBusinessDocument(e.target.files[0])}
+              required
+            />
+          </div>
 
-      <div>
-        <label htmlFor="logo" className="block text-gray-700">
-          Upload Logo
-        </label>
-        <input
-          type="file"
-          id="logo"
-          onChange={handleLogoUpload}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="logo">Logo</Label>
+            <Input
+              type="file"
+              id="logo"
+              accept="image/*"
+              onChange={(e) => setLogo(e.target.files[0])}
+            />
+          </div>
 
-      <div>
-        <label htmlFor="icon" className="block text-gray-700">
-          Upload Icon
-        </label>
-        <input
-          type="file"
-          id="icon"
-          onChange={handleIconUpload}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="primaryColor">Primary Color</Label>
+            <Input
+              type="color"
+              id="primaryColor"
+              name="primaryColor"
+              value={formData.primaryColor}
+              onChange={handleChange}
+            />
+          </div>
 
-      <div>
-        <label htmlFor="primaryColor" className="block text-gray-700">
-          Primary Color
-        </label>
-        <input
-          type="color"
-          id="primaryColor"
-          value={primaryColor}
-          onChange={(e) => setPrimaryColor(e.target.value)}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="secondaryColor">Secondary Color</Label>
+            <Input
+              type="color"
+              id="secondaryColor"
+              name="secondaryColor"
+              value={formData.secondaryColor}
+              onChange={handleChange}
+            />
+          </div>
 
-      <div>
-        <label htmlFor="secondaryColor" className="block text-gray-700">
-          Secondary Color
-        </label>
-        <input
-          type="color"
-          id="secondaryColor"
-          value={secondaryColor}
-          onChange={(e) => setSecondaryColor(e.target.value)}
-          className="border p-2 mt-2 w-full rounded"
-        />
-      </div>
+          <div>
+            <Label htmlFor="fontFamily">Font Family</Label>
+            <Select
+              name="fontFamily"
+              value={formData.fontFamily}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, fontFamily: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select font" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Arial">Arial</SelectItem>
+                <SelectItem value="Roboto">Roboto</SelectItem>
+                <SelectItem value="Open Sans">Open Sans</SelectItem>
+                <SelectItem value="Montserrat">Montserrat</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white p-2 rounded mt-4 w-full"
-      >
-        Submit
-      </button>
-    </div>
+          <div>
+            <Label htmlFor="position">Chat Position</Label>
+            <Select
+              name="position"
+              value={formData.position}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, position: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                <SelectItem value="bottom-left">Bottom Left</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? 'Creating...' : 'Create Chatbot'}
+        </Button>
+      </form>
+    </Card>
   );
 };
 
