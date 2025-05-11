@@ -27,4 +27,4 @@ RUN chown -R node:node /app
 USER node
 
 # Start command
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
