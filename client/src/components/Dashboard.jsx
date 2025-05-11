@@ -34,13 +34,12 @@ const Dashboard = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="container mx-auto py-8">Loading...</div>;
   }
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Your Chatbots</h1>
+      <div className="flex justify-end mb-8">
         <Button onClick={() => navigate('/create-chatbot')}>
           Create New Chatbot
         </Button>
