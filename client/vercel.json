@@ -5,15 +5,24 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "outputDirectory": "dist"
       }
     }
   ],
   "routes": [
     {
-      "src": "/.*",
-      "dest": "/index.html",
-      "status": 200
+      "src": "/(.*)",
+      "dest": "/",
+      "headers": {
+        "Cache-Control": "s-maxage=0"
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
