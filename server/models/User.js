@@ -54,7 +54,6 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ 'tokens.token': 1 });
 
 userSchema.methods.toJSON = function() {

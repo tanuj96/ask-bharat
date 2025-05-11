@@ -2,7 +2,7 @@ import express from 'express';
 import { chatModel } from '../langchain/ollamachat.js';
 import Message from '../models/Message.js';
 import Customization from '../models/Customization.js';
-import { createChromaStore } from '../langchain/vectorStore.js';
+import { queryVectorStore } from '../langchain/vectorStore.js';
 import auth from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -27,19 +27,24 @@ router.post('/', auth, async (req, res) => {
 
     let contextText = "";
     try {
-      // Get context from vector store
-      const store = await createChromaStore();
-      const relevantDocs = await store.similaritySearch(message, 3, {
+      // Get context from vector store using simplified filter
+      const relevantDocs = await queryVectorStore(message, 3, chatbotId);
+      contextText = relevantDocs.length > 0
+        ? relevantDocs.map(doc => doc.pageContent).join("\n\n")
+        : "No relevant context found";
+        
+      console.log("Context retrieved:", {
+        query: message,
+        documentsFound: relevantDocs.length,
         chatbotId,
         ownerId: req.user._id.toString()
       });
-      contextText = relevantDocs.map(doc => doc.pageContent).join("\n\n");
     } catch (vectorError) {
       console.error("Vector store error (using empty context):", vectorError);
       contextText = "No additional context available";
     }
 
-    // Create messages array with context
+    // Rest of your existing chat processing logic...
     const messages = [
       {
         role: "system",
@@ -64,7 +69,7 @@ router.post('/', auth, async (req, res) => {
     });
     await userMessage.save();
 
-    // Get AI response with timeout
+    // Get AI response
     let response;
     try {
       response = await Promise.race([
@@ -100,12 +105,17 @@ router.post('/', auth, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Chat Error:", err);
+    console.error("Chat Error:", {
+      error: err.message,
+      stack: err.stack,
+      requestBody: req.body
+    });
     res.status(500).json({ 
       error: "Failed to process chat request",
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });
+
 
 export default router;

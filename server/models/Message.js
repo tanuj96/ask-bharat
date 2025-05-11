@@ -30,7 +30,4 @@ const messageSchema = new mongoose.Schema({
   }
 });
 
-// Add indexes for better query performance
-messageSchema.index({ chatbotId: 1, timeStamp: 1 });
-
 export default mongoose.model("Message", messageSchema);
