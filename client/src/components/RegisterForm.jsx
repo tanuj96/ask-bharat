@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card } from './ui/card';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Card } from "./ui/card";
+import api from '../../utils/api';
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: ''
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const validatePassword = (password) => {
@@ -26,37 +27,33 @@ const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('Passwords do not match');
+        throw new Error("Passwords do not match");
       }
 
       if (!validatePassword(formData.password)) {
         throw new Error(
-          'Password must be at least 8 characters with uppercase, lowercase, and numbers'
+          "Password must be at least 8 characters with uppercase, lowercase, and numbers"
         );
       }
 
-      const response = await fetch('http://localhost:5001/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword
-        }),
+      const response = await api.post("/auth/register", {
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+      const data = await response.data;
+      
+      if (!data.user) {
+        throw new Error(data.error || "Registration failed");
       }
 
-      localStorage.setItem('token', data.token);
-      navigate('/dashboard');
+      localStorage.setItem("token", data.token);
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -66,7 +63,7 @@ const RegisterForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -108,11 +105,11 @@ const RegisterForm = () => {
           />
         </div>
         <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? 'Registering...' : 'Register'}
+          {isLoading ? "Registering..." : "Register"}
         </Button>
       </form>
       <div className="mt-4 text-center">
-        <Button variant="link" onClick={() => navigate('/login')}>
+        <Button variant="link" onClick={() => navigate("/login")}>
           Already have an account? Login
         </Button>
       </div>

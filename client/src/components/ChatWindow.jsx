@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import { Card } from "./ui/card";
+import api from '../../utils/api';
 
 export default function ChatWindow({
   customization,
@@ -26,10 +26,7 @@ export default function ChatWindow({
     if (!chatbotId) return;
 
     try {
-      const res = await axios.get(`http://localhost:5001/api/messages`, {
-        params: { chatbotId },
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+     const res = await api.get('/messages', { params: { chatbotId } })
       setMessages(res.data);
     } catch (err) {
       console.error("Error fetching messages:", err);
@@ -40,26 +37,6 @@ export default function ChatWindow({
     fetchMessages();
   }, [fetchMessages]);
 
-  // useEffect(() => {
-  //   if (!chatbotId) return;
-
-  //   const fetchMessages = async () => {
-  //     try {
-  //       const res = await axios.get(`http://localhost:5001/api/messages`, {
-  //         params: { chatbotId },
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem('token')}`
-  //         }
-  //       });
-  //       setMessages(res.data);
-  //     } catch (err) {
-  //       console.error('Error fetching messages:', err);
-  //     }
-  //   };
-
-  //   fetchMessages();
-  // }, [chatbotId]);
-
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -69,18 +46,7 @@ export default function ChatWindow({
     setIsLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:5001/api/chat",
-        {
-          message: input,
-          chatbotId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+     const res = await api.post('/chat', { message: input, chatbotId })
 
       const botMsg = {
         sender: res.data.sender || businessName,

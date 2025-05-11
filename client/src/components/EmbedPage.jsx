@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import ChatWindow from "../components/ChatWindow";
 import { Card } from "../components/ui/card";
+import api from '../../utils/api';
 
 export default function EmbedPage() {
   const { chatbotId } = useParams();
@@ -15,15 +15,7 @@ export default function EmbedPage() {
 
     const fetchCustomization = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(
-          `http://localhost:5001/api/customization/${chatbotId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
+        const res = await api.get(`/customization/${chatbotId}`)
         setCustomization(res.data);
       } catch (err) {
         console.error("Error fetching customization:", err);
